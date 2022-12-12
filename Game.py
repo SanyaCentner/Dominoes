@@ -1,36 +1,23 @@
 """Main Game"""
-
-
+import os
+import sys
+os.environ["SDL_VIDEODRIVER"] = "dummy"
 from Gamers import Gamer
 import random
-class Heap:
-
-    def __init__(self):
-        self.board = []
-        self.shticks = {1: "0-0", 2: "0-1", 3: "0-2", 4: "0-3", 5: "0-4", 6: "0-5", 7: "0-6",
-                       8: "1-1", 9: "1-2", 10: "1-3", 11: "1-4", 12: "1-5", 13: "1-6",
-                       14: "2-2", 15: "2-3", 16: "2-4", 17: "2-5", 18: "2-6",
-                       19: "3-3", 20: "3-4", 21: "3-5", 22: "3-6",
-                       23: "4-4", 24: "4-5", 25: "4-6",
-                       26: "5-5", 27: "5-6",
-                       28: "6-6"}
-
-    def insert_end(self, value):
-        self.board.append(value)
-
-    def insert_front(self, value):
-        self.board.insert(0, value)
+import pygame
+from pygame.color import THECOLORS
 
 
 class Game:
     """Основная часть игры"""
 
     min_of_end_point = 101
-    def __init__(self):
-        self.gamer_one = Gamer()
-        self.gamer_two = Gamer()
-        self.gamer_three = Gamer()
-        self.gamer_four = Gamer()
+
+    def __init__(self, name_one, name_two, name_three, name_four):
+        self.gamer_one = Gamer(name_one)
+        self.gamer_two = Gamer(name_two)
+        self.gamer_three = Gamer(name_three)
+        self.gamer_four = Gamer(name_four)
         self.board = list([])
         self.players = list([self.gamer_one, self.gamer_two, self.gamer_three, self.gamer_four])
         self.count_round = 1
@@ -53,30 +40,11 @@ class Game:
         for i in range(0, 4):
             count_doubles = 0
             for number in self.doubles:
-                if number in list_of_shtick[i * 7 : i * 7 + 7]:
+                if number in list_of_shtick[i * 7: i * 7 + 7]:
                     count_doubles += 1
             if count_doubles >= 5:
                 return False
         return True
-
-    def chip_distribution(self):
-        """ Раздача фишек """
-        tmp = list(range(1, 29))
-        random.shuffle(tmp)
-
-        if (self.examination_distribution(tmp) == True):
-            self.gamer_one.shticks = sorted(tmp[:7])
-            self.gamer_one.count_shticks = 7
-            self.gamer_two.shticks = sorted(tmp[7:14])
-            self.gamer_two.count_shticks = 7
-            self.gamer_three.shticks = sorted(tmp[14:21])
-            self.gamer_three.count_shticks = 7
-            self.gamer_four.shticks = sorted(tmp[21:28])
-            self.gamer_four.count_shticks = 7
-        else:
-            tmp = list(range(1, 29))
-            random.shuffle(tmp)
-            self.chip_distribution(tmp)
 
     def match_list(self, count):
         """ Функция выбора порядка ходов """
@@ -99,15 +67,41 @@ class Game:
                     return self.match_list(tmp)
             tmp += 1
 
+    def order(self):
+        """Возвращаем порядок"""
+        if self.count_round == 1:
+            return self.find_first_move()
+        else:
+            return self.match_list(self.number_first_move)
+
+    def chip_distribution(self):
+        """ Раздача фишек и возврат """
+        tmp = list(range(1, 29))
+        random.shuffle(tmp)
+
+        if (self.examination_distribution(tmp) == True):
+            self.gamer_one.shticks = sorted(tmp[:7])
+            self.gamer_one.count_shticks = 7
+            self.gamer_two.shticks = sorted(tmp[7:14])
+            self.gamer_two.count_shticks = 7
+            self.gamer_three.shticks = sorted(tmp[14:21])
+            self.gamer_three.count_shticks = 7
+            self.gamer_four.shticks = sorted(tmp[21:28])
+            self.gamer_four.count_shticks = 7
+        else:
+            tmp = list(range(1, 29))
+            random.shuffle(tmp)
+            self.chip_distribution(tmp)
+
     def options(self, value):
         """Возможные варианты которые можно поставить"""
         tmp_lst = list([])
         for key in self.all_shtick:
             if ((self.all_shtick[key][0] == self.all_shtick[value][0] or
-                    self.all_shtick[key][0] == self.all_shtick[value][2] or
-                    self.all_shtick[key][2] == self.all_shtick[value][0] or
-                    self.all_shtick[key][2] == self.all_shtick[value][2]) and
-                (self.all_shtick[key] != self.all_shtick[value])):
+                 self.all_shtick[key][0] == self.all_shtick[value][2] or
+                 self.all_shtick[key][2] == self.all_shtick[value][0] or
+                 self.all_shtick[key][2] == self.all_shtick[value][2]) and
+                    (self.all_shtick[key] != self.all_shtick[value])):
                 tmp_lst.append(key)
         return tmp_lst
 
@@ -180,31 +174,161 @@ class Game:
         else:
             self.possible_chips_that_can_be_placed(self.players[number_of_player])
 
-    def start_round(self):
-        """ Идет раунд """
+    def return_coordinate_point_one(self, number, X, Y):
+        # Возвращаем координату точки
+        if int(self.all_shtick[number][0]) == 1:
+            return list([[X + 15, Y + 15, 5, 4]])
+        elif int(self.all_shtick[number][0]) == 2:
+            return list([[X + 8, Y + 10, 5, 4],
+                         [X + 22, Y + 20, 5, 4]])
+        elif int(self.all_shtick[number][0]) == 3:
+            return list([[X + 7, Y + 7, 5, 4],
+                         [X + 14, Y + 14, 5, 4],
+                         [X + 21, Y + 22, 5, 4]])
+        elif int(self.all_shtick[number][0]) == 4:
+            return list([[X + 8, Y + 10, 5, 4],
+                         [X + 8, Y + 20, 5, 4],
+                         [X + 22, Y + 10, 5, 4],
+                         [X + 22, Y + 20, 5, 4]])
+        elif int(self.all_shtick[number][0]) == 5:
+            return list([[X + 7, Y + 7, 5, 4],
+                         [X + 7, Y + 22, 5, 4],
+                         [X + 14, Y + 14, 5, 4],
+                         [X + 21, Y + 7, 5, 4],
+                         [X + 21, Y + 22, 5, 4]])
+        elif int(self.all_shtick[number][0]) == 6:
+            return list([[X + 8, Y + 7, 5, 4],
+                         [X + 8, Y + 14, 5, 4],
+                         [X + 8, Y + 21, 5, 4],
+                         [X + 22, Y + 7, 5, 4],
+                         [X + 22, Y + 14, 5, 4],
+                         [X + 22, Y + 21, 5, 4]])
 
-        self.chip_distribution()
-        if self.count_round == 1:
-            order = self.find_first_move()
-        else:
-            order = self.match_list(self.number_first_move)
-        while self.end_round:
-            print('Начало раунда')
-            for number in order:
-                self.put_a_chip(number)
-
+    def return_coordinate_point_two(self, number, X, Y):
+        # Возвращаем координату точки
+        if int(self.all_shtick[number][2]) == 1:
+            return list([[X + 15, Y + 45, 5, 4]])
+        elif int(self.all_shtick[number][2]) == 2:
+            return list([[X + 8, Y + 40, 5, 4],
+                         [X + 22, Y + 50, 5, 4]])
+        elif int(self.all_shtick[number][2]) == 3:
+            return list([[X + 7, Y + 37, 5, 4],
+                         [X + 14, Y + 44, 5, 4],
+                         [X + 21, Y + 52, 5, 4]])
+        elif int(self.all_shtick[number][2]) == 4:
+            return list([[X + 8, Y + 40, 5, 4],
+                         [X + 8, Y + 50, 5, 4],
+                         [X + 22, Y + 40, 5, 4],
+                         [X + 22, Y + 50, 5, 4]])
+        elif int(self.all_shtick[number][2]) == 5:
+            return list([[X + 7, Y + 37, 5, 4],
+                         [X + 7, Y + 52, 5, 4],
+                         [X + 14, Y + 44, 5, 4],
+                         [X + 21, Y + 37, 5, 4],
+                         [X + 21, Y + 52, 5, 4]])
+        elif int(self.all_shtick[number][2]) == 6:
+            return list([[X + 8, Y + 37, 5, 4],
+                         [X + 8, Y + 44, 5, 4],
+                         [X + 8, Y + 51, 5, 4],
+                         [X + 22, Y + 37, 5, 4],
+                         [X + 22, Y + 44, 5, 4],
+                         [X + 22, Y + 51, 5, 4]])
 
     def start_game(self):
         """ Непосредственно игра """
-        print('Начало игры')
-        while self.end_game:
-            self.start_round()
 
+        pygame.init()
+        dis = pygame.display.set_mode((1500, 750))
+        dis.fill(THECOLORS['lightskyblue3'])
+        pygame.display.update()
+        pygame.display.set_caption('Dominoes by SanyaCentner')
+        clock = pygame.time.Clock()
+        time_on_move = 0.08
+        time_to_clear_text = 0.5
+        while self.end_game:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.end_game = False
+
+            while self.end_round:
+                ## Отписываем номер раунда
+                font = pygame.font.Font(None, 25)
+                text_round = font.render(f"Начинается {self.count_round}-й раунд", True, THECOLORS['black'])
+                place_text_round = text_round.get_rect(center=(750, 50))
+                dis.blit(text_round, place_text_round)
+
+                ## Тут должна быть основная логика раунда: раздать фишки и чтобы каждый видел свои
+                self.chip_distribution()
+                print('Раздача окончена')
+                ## Раздаем фишки каждому и начинаем проходить по каждому человеку и отрисовывать фишки
+                for number in self.order():
+                    print(self.players[number - 1].shticks)
+                    # Отрисовываем кто делает ход
+                    text_name = font.render(f"Ход делает {self.players[number - 1].name}", True, THECOLORS['black'])
+                    place_text_name = text_name.get_rect(center=(100, 50))
+                    dis.blit(text_name, place_text_name)
+                    # Отрисовываем все фишки данного игрока
+                    text_shticks = font.render("Ваши фишки:", True, THECOLORS['black'])
+                    place_text_shticks = text_shticks.get_rect(center=(750, 670))
+                    dis.blit(text_shticks, place_text_shticks)
+                    # Отрисовываем сами фишки
+                    X_player_shticks_start = 645
+                    Y_player_shticks_start = 690
+                    # Отрисовываем закрашенную часть
+                    pygame.draw.polygon(dis, THECOLORS['white'],
+                                        [[X_player_shticks_start, Y_player_shticks_start],
+                                         [X_player_shticks_start + 210, Y_player_shticks_start],
+                                         [X_player_shticks_start + 210, Y_player_shticks_start + 60],
+                                         [X_player_shticks_start, Y_player_shticks_start + 60]])
+                    for dominoes in self.players[number - 1].shticks:
+                        print(dominoes)
+                        print(self.return_coordinate_point_one(dominoes, X_player_shticks_start,
+                                                               Y_player_shticks_start))
+                        # Отрисовываем точки, если там нуль, то отрисовываем только нижнее
+                        if dominoes not in [1, 2, 3, 4, 5, 6, 7]:
+                            for lst_one in self.return_coordinate_point_one(dominoes, X_player_shticks_start,
+                                                                            Y_player_shticks_start):
+                                pygame.draw.rect(dis, THECOLORS['black'], lst_one)
+                        if dominoes != 1:
+                            for lst_two in self.return_coordinate_point_two(dominoes, X_player_shticks_start,
+                                                                            Y_player_shticks_start):
+                                pygame.draw.rect(dis, THECOLORS['black'], lst_two)
+                        # Переходим к следущей координате
+                        X_player_shticks_start = X_player_shticks_start + 30
+                        pygame.draw.line(dis, THECOLORS['black'], [X_player_shticks_start, 690],
+                                         [X_player_shticks_start, 750])
+
+                        pygame.draw.line(dis, THECOLORS['black'], [645, 720], [855, 720])
+                        pygame.display.update()
+                        clock.tick(time_to_clear_text)
+                    clock.tick(time_on_move)
+
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.end_round = False
+
+                    #                     if event.type ==
+
+                    #                     self.put_a_chip(number)
+
+                    clock.tick(time_on_move)
+
+                    self.count_round += 1
+
+                self.end_round = True
+
+            self.end_game = False
+        pygame.quit()
+        quit()
+        # self.start_round()
 
 
 if __name__ == '__main__':
-    game = Game()
+    # game = Game(input("Введите имя первого игрока"), input("Введите имя второго игрока"),
+    #             input("Введите имя третьего игрока"), input("Введите имя четвертого игрока"))
+    game = Game('Sasha', 'Vanya', 'Seva', 'Vova')
     game.start_game()
+    print('c')
 
 
 
