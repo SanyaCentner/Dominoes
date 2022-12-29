@@ -1,11 +1,26 @@
-"""Main Game"""
-import os
-import sys
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-from Gamers import Gamer
-import random
 import pygame
+import time
 from pygame.color import THECOLORS
+import random
+from enum import Enum
+
+
+class Gamer:
+
+    def __init__(self, name):
+        self.name = name
+        self.count_shticks = 0
+        self.shticks = list([])
+
+    def input_number(self):
+        while True:
+            try:
+                number_shtics = int(input())
+                break
+            except ValueError:
+                print('Неправильно введен номер, попробуйте снова')
+                return self.input_number()
+        return number_shtics
 
 
 class Game:
@@ -32,8 +47,19 @@ class Game:
                            19: "3-3", 20: "3-4", 21: "3-5", 22: "3-6",
                            23: "4-4", 24: "4-5", 25: "4-6",
                            26: "5-5", 27: "5-6",
-                           28: "6-6"}
+                           28: "6-6",
+                           29: "0-0", 30: "1-0", 31: "2-0", 32: "3-0", 33: "4-0", 34: "5-0", 35: "6-0",
+                           36: "1-1", 37: "2-1", 38: "3-1", 39: "4-1", 40: "5-1", 41: "6-1",
+                           42: "2-2", 43: "3-2", 44: "4-2", 45: "5-2", 46: "6-2",
+                           47: "3-3", 48: "4-3", 49: "5-3", 50: "6-3",
+                           51: "4-4", 52: "5-4", 53: "6-4",
+                           54: "5-5", 55: "6-5",
+                           56: "6-6"}
         self.doubles = [1, 8, 14, 19, 23, 26, 28]
+        self.X_right = 750
+        self.X_left = 750
+        self.Y_doubles = 345
+        self.Y_not_doubles = 360
 
     def examination_distribution(self, list_of_shtick):
         """ Проверка разданных фишек на наличие 5 и больше дублей """
@@ -93,86 +119,158 @@ class Game:
             random.shuffle(tmp)
             self.chip_distribution(tmp)
 
-    def options(self, value):
+    def options(self, value, side):
         """Возможные варианты которые можно поставить"""
         tmp_lst = list([])
-        for key in self.all_shtick:
-            if ((self.all_shtick[key][0] == self.all_shtick[value][0] or
-                 self.all_shtick[key][0] == self.all_shtick[value][2] or
-                 self.all_shtick[key][2] == self.all_shtick[value][0] or
-                 self.all_shtick[key][2] == self.all_shtick[value][2]) and
-                    (self.all_shtick[key] != self.all_shtick[value])):
-                tmp_lst.append(key)
+        if len(self.board) != 0:
+            if side == 'left':
+                for key in self.all_shtick:
+                    if ((self.all_shtick[key][2] == self.all_shtick[self.board[0]][0]) and
+                            (self.all_shtick[key] != self.all_shtick[self.board[0]])):
+                        tmp_lst.append(key)
+            elif side == 'right':
+                for key in self.all_shtick:
+                    if ((self.all_shtick[key][0] == self.all_shtick[self.board[-1]][2]) and
+                            (self.all_shtick[key] != self.all_shtick[self.board[-1]])):
+                        tmp_lst.append(key)
         return tmp_lst
 
-    def examination_number_shtics(self, values, player):
+    def examination_number_shtics(self, number, key, side, variable):
         """Фишка была выбрана и теперь мы пытаемся ее ставить"""
-
-        options_on_the_left = self.options(self.board[0])
-        options_on_the_right = self.options(self.board[-1])
 
         ## Здесь можно поставить фишку и справа, и слева, поэтому надо предлагать игроку какой-то выбор и выводить
         ##доску на экран чтобы он понимал куда можно поставить
+        print('мы зашли в функцию')
+        print(f"Какой номер из player берем {number}, какая фишка передается {key}, {variable}")
+        for var in variable:
+            if var[0][0] == number and var[0][1] == side and var[1] == True and var[2] == True:
+                return (1, key + 28)
+            if var[0][0] == number and var[0][1] == side and var[1] == True and var[2] == False:
+                return (1, key)
+            if var[0][0] == number and var[0][1] == side and var[1] == False and var[2] == True:
+                return (2, key + 28)
+            if var[0][0] == number and var[0][1] == side and var[1] == False and var[2] == False:
+                return (2, key)
 
-        if player.shticks[values] in options_on_the_left:
-            print('Ставим фишку слева')
-            self.board.insert(0, values)
-            player.shticks.pop(values)
-            player.count_shticks -= 1
-            return True
-        elif values in options_on_the_right:
-            print('Ставим фишку справа')
-            self.board.append(0, values)
-            player.shticks.pop(values)
-            player.count_shticks -= 1
-            return True
-        else:
-            return False
+    def summ_points(self, player_first, player_second):
+        """ Считаем количество очков"""
+        count = 0
+        for shtick in player_first.shticks:
+            count += int(self.all_shtick[shtick][0]) + int(self.all_shtick[shtick][2])
+            print(f"Какая фишка {self.all_shtick[shtick]}, Сумма очков {count}")
+        for shtick in player_second.shticks:
+            count += int(self.all_shtick[shtick][0]) + int(self.all_shtick[shtick][2])
+            print(f"Какая фишка {self.all_shtick[shtick]}, Сумма очков {count}")
 
-    def dont_end_round(self):
+        return count
+
+    def dont_end_round(self, passes, number_of_player):
         """ Проверяем кончился ли раунд?"""
+        ## Проверяем рыбу
+        print("Проверяем конец раунда")
+        if passes == 4:
+            self.number_first_move = number_of_player
+            self.count_round += 1
+            team_one = self.summ_points(self.gamer_one, self.gamer_three)
+            team_two = self.summ_points(self.gamer_two, self.gamer_four)
+            if team_one == team_two:
+                self.point_team_one += team_one
+                self.point_team_two += team_two
+            elif team_one > team_two:
+                self.point_team_one += team_one
+            elif team_one < team_two:
+                self.point_team_two += team_two
+            return True
 
-        for player in self.players:
-            if player.count_shticks == 0:
-                self.end_round = False
-                return False
+        ## Проверяем конец раунда в целом
+        for count in range(0, 4):
+            print('ну что же, мы внутри')
+            if len(self.players[count].shticks) == 0:
+                print(f"номер игрока {count}, сам игрок {self.players[count].name}")
+                self.number_first_move = count + 1
+                self.count_round += 1
+                if count == 1 or count == 3:
+                    self.point_team_one += self.summ_points(self.gamer_one, self.gamer_three)
+                elif count == 2 or count == 4:
+                    self.point_team_two += self.summ_points(self.gamer_two, self.gamer_four)
+                return True
 
-        ## Проверяем рыбу через возможные варианты
-        var_of_fish = [list([i for i in range(1, 8)]), list([2, 8, 9, 10, 11, 12, 13]),
-                       list([3, 9, 14, 15, 16, 17, 18]), list([4, 10, 15, 19, 20, 21, 22]),
-                       list([5, 11, 16, 20, 23, 24, 25]), list([6, 12, 17, 21, 24, 26, 27]),
-                       list([6, 13, 18, 22, 25, 27, 28])]
-        for number_of_fish in var_of_fish:
-            count = 0
-            for elem in number_of_fish:
-                if elem in self.board:
-                    count += 1
-            if count == 7:
-                self.end_round = False
-                return False
+        return False
 
     def possible_chips_that_can_be_placed(self, player):
-        """ Выбираем номер фишки и проверяем куда ее можно поставить"""
-        print('Ваши фишки')
-        for elem in player.shticks:
-            print(self.all_shtick[elem])
-        print('Введите номер фишки')
-        number_shtics = player.input_number()
+        """ Отслеживаем номер фишки и куда ее поставить"""
 
-        if self.examination_number_shtics(number_shtics, player) is True:
-            return True
-        else:
-            return self.possible_chips_that_can_be_placed(player)
+        ## Здесь можно поставить фишку и справа, и слева, поэтому надо предлагать игроку какой-то выбор и выводить
+        ##доску на экран чтобы он понимал куда можно поставить
+        lst_possible = list([])
+        lst_tmp = list([])
+        # Это условие для нового раунда и чел может поставить что хочет
+        if len(self.board) == 0:
+            for elem in player.shticks:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], True, False])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], True, False])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], False, False])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], False, False])
+            return lst_possible
+
+        options_on_the_left = self.options(self.board[0], 'left')
+        options_on_the_right = self.options(self.board[-1], 'right')
+        #         print('Номера, которые можно поставить слева', options_on_the_left)
+        #         print('Номера, которые можно поставить справа', options_on_the_right)
+
+        for elem in player.shticks:
+            if elem in options_on_the_left and elem in options_on_the_right:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], True, False])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], True, False])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], False, False])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], False, False])
+            elif elem in options_on_the_left:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], True, False])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], False, False])
+            elif elem in options_on_the_right:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'right'], True, False])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'right'], False, False])
+
+        for elem in player.shticks:
+            if elem + 28 in options_on_the_left and elem + 28 in options_on_the_right:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], True, True])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], True, True])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], False, True])
+                    lst_possible.append([[player.shticks.index(elem), 'right'], False, True])
+            elif elem + 28 in options_on_the_left:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], True, True])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'left'], False, True])
+            elif elem + 28 in options_on_the_right:
+                if elem in self.doubles:
+                    lst_possible.append([[player.shticks.index(elem), 'right'], True, True])
+                else:
+                    lst_possible.append([[player.shticks.index(elem), 'right'], False, True])
+        #         print('возможные варианты:', lst_possible)
+        if len(lst_possible) == 0:
+            return ([[], None, None])
+        return lst_possible
 
     def put_a_chip(self, number_of_player):
         """ Выбор фишки, которую можно поставить"""
 
         if self.count_round == 1 and 8 not in self.board:
-            self.board.append(8)
-            self.players[number_of_player - 1].shticks.remove(8)
-            self.players[number_of_player - 1].count_shticks -= 1
+            n = self.players[number_of_player].shticks.index(8)
+            return [[[n, 'right'], True, False], [
+                [n, 'left'], True, False]]
         else:
-            self.possible_chips_that_can_be_placed(self.players[number_of_player])
+            return self.possible_chips_that_can_be_placed(self.players[number_of_player])
 
     def return_coordinate_point_one(self, number, X, Y):
         # Возвращаем координату точки
@@ -234,35 +332,59 @@ class Game:
                          [X + 22, Y + 44, 5, 4],
                          [X + 22, Y + 51, 5, 4]])
 
+    def dont_end_game(self):
+        if self.point_team_one >= min_of_end_point:
+            return 'one'
+        elif self.point_team_two >= min_of_end_point:
+            return 'two'
+        else:
+            return 'equality'
+
+    def exam_point(self, key, number):
+        if number == 1:
+            if self.all_shtick[key][0] == '0':
+                return False
+            else:
+                return True
+        if number == 2:
+            if self.all_shtick[key][2] == '0':
+                return False
+            else:
+                return True
+
     def start_game(self):
         """ Непосредственно игра """
-
         pygame.init()
         dis = pygame.display.set_mode((1500, 750))
         dis.fill(THECOLORS['lightskyblue3'])
         pygame.display.update()
         pygame.display.set_caption('Dominoes by SanyaCentner')
         clock = pygame.time.Clock()
-        time_on_move = 0.08
-        time_to_clear_text = 0.5
+        time_on_move = 1
+        time_to_clear_text = 1.5
         while self.end_game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.end_game = False
+            # Пока не конец раунда такой порядок
+            self.chip_distribution()
+            print('Раздача окончена')
+            order = self.order()
+            #             print(order)
+            # Раунд начался
+            ## Отписываем номер раунда
+            font = pygame.font.Font(None, 25)
+            text_round = font.render(f"Начинается {self.count_round}-й раунд", True, THECOLORS['black'])
+            place_text_round = text_round.get_rect(center=(750, 50))
+            dis.blit(text_round, place_text_round)
+            self.end_round = True
+            number_of_passes = 0
+            self.board = list([])
 
             while self.end_round:
-                ## Отписываем номер раунда
-                font = pygame.font.Font(None, 25)
-                text_round = font.render(f"Начинается {self.count_round}-й раунд", True, THECOLORS['black'])
-                place_text_round = text_round.get_rect(center=(750, 50))
-                dis.blit(text_round, place_text_round)
-
                 ## Тут должна быть основная логика раунда: раздать фишки и чтобы каждый видел свои
-                self.chip_distribution()
-                print('Раздача окончена')
                 ## Раздаем фишки каждому и начинаем проходить по каждому человеку и отрисовывать фишки
-                for number in self.order():
-                    print(self.players[number - 1].shticks)
+                for number in order:
                     # Отрисовываем кто делает ход
                     text_name = font.render(f"Ход делает {self.players[number - 1].name}", True, THECOLORS['black'])
                     place_text_name = text_name.get_rect(center=(100, 50))
@@ -281,9 +403,6 @@ class Game:
                                          [X_player_shticks_start + 210, Y_player_shticks_start + 60],
                                          [X_player_shticks_start, Y_player_shticks_start + 60]])
                     for dominoes in self.players[number - 1].shticks:
-                        print(dominoes)
-                        print(self.return_coordinate_point_one(dominoes, X_player_shticks_start,
-                                                               Y_player_shticks_start))
                         # Отрисовываем точки, если там нуль, то отрисовываем только нижнее
                         if dominoes not in [1, 2, 3, 4, 5, 6, 7]:
                             for lst_one in self.return_coordinate_point_one(dominoes, X_player_shticks_start,
@@ -301,34 +420,207 @@ class Game:
                         pygame.draw.line(dis, THECOLORS['black'], [645, 720], [855, 720])
                         pygame.display.update()
                         clock.tick(time_to_clear_text)
-                    clock.tick(time_on_move)
 
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
+                    # Закрашиваем верхнюю часть с именем человека
+                    pos_var = self.put_a_chip(number - 1)
+
+                    print(f"Какие фишки возможно поставить {pos_var}")
+                    print(f"Какие элементы на столе {self.board}")
+                    if pos_var != list([[], None, None]):
+                        number_of_passes = 0
+                        tmp = True
+                        while tmp:
+                            for event in pygame.event.get():
+                                if event.type == pygame.QUIT:
+                                    self.end_round = False
+                                #                                 print('мы внутри')
+                                # Теперь человек выбирает фишку и мы ее отрисуем
+                                if event.type == pygame.KEYDOWN:
+                                    # Чел выбирает фишку и проводим проверку можно ли ее ставить
+                                    if event.key == pygame.K_1:
+                                        tmp_num = 0
+                                    elif event.key == pygame.K_2:
+                                        tmp_num = 1
+                                    elif event.key == pygame.K_3:
+                                        tmp_num = 2
+                                    elif event.key == pygame.K_4:
+                                        tmp_num = 3
+                                    elif event.key == pygame.K_5:
+                                        tmp_num = 4
+                                    elif event.key == pygame.K_6:
+                                        tmp_num = 5
+                                    elif event.key == pygame.K_7:
+                                        tmp_num = 6
+
+                                    if event.key == pygame.K_LEFT:
+                                        # Если возвращается 1, то это дубль, если 2, то обычная фишка
+                                        doubles_, key = self.examination_number_shtics(tmp_num,
+                                                                                       self.players[number - 1].shticks[
+                                                                                           tmp_num],
+                                                                                       'left', pos_var)
+                                        if doubles_ == 1:
+                                            print('мы внутри номера', tmp_num)
+                                            pygame.draw.polygon(dis, THECOLORS['white'],
+                                                                [[self.X_left - 30, self.Y_doubles],
+                                                                 [self.X_left, self.Y_doubles],
+                                                                 [self.X_left, self.Y_doubles + 60],
+                                                                 [self.X_left - 30, self.Y_doubles + 60]])
+                                            pygame.draw.line(dis, THECOLORS['black'],
+                                                             [self.X_left - 30, self.Y_doubles + 30],
+                                                             [self.X_left, self.Y_doubles + 30])
+
+                                            self.board.insert(0, key)
+                                            self.players[number - 1].shticks.remove(
+                                                self.players[number - 1].shticks[tmp_num])
+                                            self.players[number - 1].count_shticks -= 1
+                                            # Отрисовывание точек
+                                            if self.exam_point(key, 1):
+                                                for lst_one in self.return_coordinate_point_one(key,
+                                                                                                self.X_left - 30,
+                                                                                                self.Y_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_one)
+                                            if self.exam_point(key, 2):
+                                                for lst_two in self.return_coordinate_point_two(key,
+                                                                                                self.X_left - 30,
+                                                                                                self.Y_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_two)
+                                            self.X_left -= 30
+                                            pygame.display.update()
+                                            clock.tick(time_to_clear_text)
+                                            tmp = False
+                                            break
+
+                                        elif doubles_ == 2:
+                                            pygame.draw.polygon(dis, THECOLORS['white'],
+                                                                [[self.X_left - 60, self.Y_not_doubles],
+                                                                 [self.X_left, self.Y_not_doubles],
+                                                                 [self.X_left, self.Y_not_doubles + 30],
+                                                                 [self.X_left - 60, self.Y_not_doubles + 30]])
+                                            pygame.draw.line(dis, THECOLORS['black'],
+                                                             [self.X_left - 30, self.Y_not_doubles],
+                                                             [self.X_left - 30, self.Y_not_doubles + 30])
+                                            self.board.insert(0, key)
+                                            self.players[number - 1].shticks.remove(
+                                                self.players[number - 1].shticks[tmp_num])
+                                            self.players[number - 1].count_shticks -= 1
+                                            if self.exam_point(key, 1):
+                                                for lst_one in self.return_coordinate_point_one(key,
+                                                                                                self.X_left - 60,
+                                                                                                self.Y_not_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_one)
+                                            if self.exam_point(key, 2):
+                                                for lst_two in self.return_coordinate_point_two(key,
+                                                                                                self.X_left - 30,
+                                                                                                self.Y_not_doubles - 30):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_two)
+                                            self.X_left -= 60
+                                            pygame.display.update()
+                                            clock.tick(time_to_clear_text)
+                                            tmp = False
+                                            break
+
+                                    elif event.key == pygame.K_RIGHT:
+                                        doubles_, key = self.examination_number_shtics(tmp_num,
+                                                                                       self.players[number - 1].shticks[
+                                                                                           tmp_num],
+                                                                                       'right', pos_var)
+                                        # Если возвращается 1, то это дубль, если 2, то обычная фишка
+                                        if doubles_ == 1:
+                                            pygame.draw.polygon(dis, THECOLORS['white'],
+                                                                [[self.X_right, self.Y_doubles],
+                                                                 [self.X_right + 30, self.Y_doubles],
+                                                                 [self.X_right + 30, self.Y_doubles + 60],
+                                                                 [self.X_right, self.Y_doubles + 60]])
+                                            pygame.draw.line(dis, THECOLORS['black'],
+                                                             [self.X_right, self.Y_doubles + 30],
+                                                             [self.X_right + 30, self.Y_doubles + 30])
+                                            self.board.append(key)
+                                            self.players[number - 1].shticks.remove(
+                                                self.players[number - 1].shticks[tmp_num])
+                                            self.players[number - 1].count_shticks -= 1
+                                            if self.exam_point(key, 1):
+                                                for lst_one in self.return_coordinate_point_one(key,
+                                                                                                self.X_right,
+                                                                                                self.Y_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_one)
+                                            if self.exam_point(key, 2):
+                                                for lst_two in self.return_coordinate_point_two(key,
+                                                                                                self.X_right,
+                                                                                                self.Y_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_two)
+                                            self.X_right += 30
+                                            pygame.display.update()
+                                            clock.tick(time_to_clear_text)
+                                            tmp = False
+                                            break
+
+                                        elif doubles_ == 2:
+                                            pygame.draw.polygon(dis, THECOLORS['white'],
+                                                                [[self.X_right, self.Y_not_doubles],
+                                                                 [self.X_right + 60, self.Y_not_doubles],
+                                                                 [self.X_right + 60, self.Y_not_doubles + 30],
+                                                                 [self.X_right, self.Y_not_doubles + 30]])
+                                            pygame.draw.line(dis, THECOLORS['black'],
+                                                             [self.X_right + 30, self.Y_not_doubles],
+                                                             [self.X_right + 30, self.Y_not_doubles + 30])
+                                            self.board.append(key)
+                                            self.players[number - 1].shticks.remove(
+                                                self.players[number - 1].shticks[tmp_num])
+                                            self.players[number - 1].count_shticks -= 1
+                                            if self.exam_point(key, 1):
+                                                for lst_one in self.return_coordinate_point_one(key,
+                                                                                                self.X_right,
+                                                                                                self.Y_not_doubles):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_one)
+                                            if self.exam_point(key, 2):
+                                                for lst_two in self.return_coordinate_point_two(key,
+                                                                                                self.X_right + 30,
+                                                                                                self.Y_not_doubles - 30):
+                                                    pygame.draw.rect(dis, THECOLORS['black'], lst_two)
+                                            self.X_right += 60
+                                            pygame.display.update()
+                                            clock.tick(time_to_clear_text)
+                                            tmp = False
+
+                    else:
+                        number_of_passes += 1
+
+                    clock.tick(time_on_move)
+                    pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
+                                        [[0, 0], [200, 0],
+                                         [200, 75], [0, 75]])
+                    pygame.display.update()
+
+                    if self.dont_end_round(number_of_passes, number - 1) == True and len(self.board) > 10:
+                        pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
+                                            [[0, 0], [1500, 0], [1500, 750], [0, 750]])
+                        print(f"Количество очков у команд {self.point_team_one} и {self.point_team_two}")
+                        print(
+                            f"Какие фишки у кого остались {self.gamer_one.shticks, self.gamer_two.shticks, self.gamer_three.shticks, self.gamer_four.shticks}")
+                        self.X_right = 750
+                        self.X_left = 750
                         self.end_round = False
+                        break
+                print('раунд закончился')
+                print(self.end_round)
 
-                    #                     if event.type ==
+            if self.dont_end_game() == 'one':
+                pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
+                                    [[0, 0], [1500, 0], [1500, 750], [0, 750]])
+                text_round = font.render("Выиграла первая команда", True, THECOLORS['black'])
+                place_text_round = text_round.get_rect(center=(750, 50))
+                dis.blit(text_round, place_text_round)
+            elif self.dont_end_game() == 'two':
+                pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
+                                    [[0, 0], [1500, 0], [1500, 750], [0, 750]])
+                text_round = font.render("Выиграла вторая команда", True, THECOLORS['black'])
+                place_text_round = text_round.get_rect(center=(750, 50))
+                dis.blit(text_round, place_text_round)
 
-                    #                     self.put_a_chip(number)
-
-                    clock.tick(time_on_move)
-
-                    self.count_round += 1
-
-                self.end_round = True
-
-            self.end_game = False
         pygame.quit()
         quit()
         # self.start_round()
 
-
-if __name__ == '__main__':
-    # game = Game(input("Введите имя первого игрока"), input("Введите имя второго игрока"),
-    #             input("Введите имя третьего игрока"), input("Введите имя четвертого игрока"))
-    game = Game('Sasha', 'Vanya', 'Seva', 'Vova')
-    game.start_game()
-    print('c')
 
 
 
