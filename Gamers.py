@@ -4,10 +4,12 @@
 
 class Gamer:
 
-    def __init__(self, name):
-        self.name = name
-        self.count_shticks = 0
-        self.shticks = list([])
+    def __init__(self, conn, addr):
+        self.conn = conn
+        self.addr = addr
+        self.shticks = []
+        self.errors = 0
+        self.name = ''
 
     def input_number(self):
         while True:
