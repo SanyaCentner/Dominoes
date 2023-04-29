@@ -101,30 +101,31 @@ class Server:
                             print(f"Возможные варианты")
                             params = self.get_params(number - 1, pos_var, self.game.count_round, self.game.board)
                             print(params)
-                            # Отправляем человеку возможные варианты как можно сходить и доску для отрисовки
-                            try:
-                                for i in range(4):
-                                    if i == number - 1:
-                                        param = str({'pos': pos_var,
-                                                     'name': self.players[number - 1].name,
-                                                     'count_of_round': self.game.count_round,
-                                                     'board': self.game.board,
-                                                     'shticks': self.players[number - 1].shticks})
-                                        self.players[i].conn.send(param.encode())
-                                    else:
-                                        param = str({'pos': list([[], None, None]),
-                                                     'name': self.players[number - 1].name,
-                                                     'count_of_round': self.game.count_round,
-                                                     'board': self.game.board,
-                                                     'shticks': self.players[i].shticks})
-                                        self.players[i].conn.send(param.encode())
-                            except:
-                                print(f"Не получилось отправить")
-                            answer = True
-                            while answer:
-                            # Принимаю от клиента фишку и куда ее ставить
+                            if pos_var != list([[], None, None]):
+                                # Отправляем человеку возможные варианты как можно сходить и доску для отрисовки
                                 try:
-                                    if pos_var != list([[], None, None]):
+                                    for i in range(4):
+                                        if i == number - 1:
+                                            param = str({'pos': pos_var,
+                                                         'name': self.players[number - 1].name,
+                                                         'count_of_round': self.game.count_round,
+                                                         'board': self.game.board,
+                                                         'shticks': self.players[number - 1].shticks})
+                                            self.players[i].conn.send(param.encode())
+                                        else:
+                                            param = str({'pos': list([[], None, None]),
+                                                         'name': self.players[number - 1].name,
+                                                         'count_of_round': self.game.count_round,
+                                                         'board': self.game.board,
+                                                         'shticks': self.players[i].shticks})
+                                            self.players[i].conn.send(param.encode())
+                                except:
+                                    print(f"Не получилось отправить")
+
+                                answer = True
+                                while answer:
+                                # Принимаю от клиента фишку и куда ее ставить
+                                    try:
                                         data = self.players[number - 1].conn.recv(1024)
                                         data = data.decode()
                                         print('Получили от игрока:', data)
@@ -141,15 +142,14 @@ class Server:
                                             self.players[number - 1].shticks.remove(
                                                 self.players[number - 1].shticks[data['count_of_position']])
                                         answer = False
-                                    else:
-                                        number_of_passes += 1
-                                        print('У игрока нет вариантов')
-                                        answer = False
-                            # Вот тут возможно надо считать рыбу
-                                except:
-                                    continue
+                                # Вот тут возможно надо считать рыбу
+                                    except:
+                                        continue
+                            else:
+                                number_of_passes += 1
+                                print('У игрока нет вариантов')
                             print('Мы по идее переходим к следующему игроку')
-                            if number_of_passes == 4:
+                            if number_of_passes >= 4:
                                 print('у нас тут типа рыба, но скорей конец раунда')
                                 time.sleep(5)
                             if self.game.dont_end_round(number_of_passes,
@@ -163,8 +163,6 @@ class Server:
                     elif self.game.dont_end_game() == 'two':
                         print('Победила вторая команда')
                     break
-
-                        # time.sleep(2)
 
 
 if __name__ == "__main__":

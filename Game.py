@@ -731,20 +731,20 @@ class Game:
     def dont_end_round(self, passes, number_of_player, players):
         """ Проверяем кончился ли раунд?"""
         ## Проверяем рыбу
-        print("Проверяем конец раунда")
-        if passes == 4:
-            self.number_first_move = number_of_player
-            self.count_round += 1
-            team_one = self.summ_points(players[0], players[2])
-            team_two = self.summ_points(players[1], players[3])
-            if team_one == team_two:
-                self.point_team_one += team_one
-                self.point_team_two += team_two
-            elif team_one > team_two:
-                self.point_team_one += team_one
-            elif team_one < team_two:
-                self.point_team_two += team_two
-            return True
+        # print("Проверяем конец раунда")
+        # if passes == 4:
+        #     self.number_first_move = number_of_player
+        #     self.count_round += 1
+        #     team_one = self.summ_points(players[0], players[2])
+        #     team_two = self.summ_points(players[1], players[3])
+        #     if team_one == team_two:
+        #         self.point_team_one += team_one
+        #         self.point_team_two += team_two
+        #     elif team_one > team_two:
+        #         self.point_team_one += team_one
+        #     elif team_one < team_two:
+        #         self.point_team_two += team_two
+        #     return True
 
         ## Проверяем конец раунда в целом
         for count in range(0, 4):
@@ -821,7 +821,6 @@ class Game:
                     lst_possible.append([[player.shticks.index(elem), 'right'], True, True])
                 else:
                     lst_possible.append([[player.shticks.index(elem), 'right'], False, True])
-        #         print('возможные варианты:', lst_possible)
         if len(lst_possible) == 0:
             return ([[], None, None])
         return lst_possible
