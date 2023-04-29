@@ -9,7 +9,7 @@ class Server:
 
     def __init__(self):
         self.main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # Клиент нам будет отправлять не один большой пакет за долгое время, а несколько маленьких паетов
+    # Клиент нам будет отправлять не один большой пакет за долгое время, а несколько маленьких пакетов
         self.main_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         self.players = list([])
         self.server_works = True
@@ -48,7 +48,7 @@ class Server:
         self.main_socket.bind(('localhost', 10000))
         # Настраиваем сокет, чтобы сервер работал непрерывно и программа не останавливалась и ждала сообщения
         self.main_socket.setblocking(0)
-        # Режим прослушки может, одновременно подключиться 4 человека
+        # Режим прослушивания может, одновременно подключиться 4 человека
         self.main_socket.listen(4)
         print('Server is work')
         while self.server_works:
@@ -58,7 +58,7 @@ class Server:
                 print(f"Подключился {addr}")
                 # Настраиваем новый сокет
                 new_socket.setblocking(0)
-                # Создаем нового игрока и добавляем в массив игроко
+                # Создаем нового игрока и добавляем в массив игроков
                 new_player = Gamer(new_socket, addr)
                 self.players.append(new_player)
             except:
@@ -86,14 +86,16 @@ class Server:
                     print(order)
                     print(f"Имя первого чела {self.players[order[0] - 1].name} "
                           f"и его фишки {self.players[order[0] - 1].shticks}")
-                    # Раунд начался
-                    # Отписываем номер раунда
+                    # Раунд начался.
+                    # Пишем номер раунда.
                     self.game.end_round = True
                     number_of_passes = 0
                     self.game.board = list([])
                     print(f"Начало {self.game.count_round}-го раунда")
+
                     while self.game.end_round:
                         for number in order:
+                            print('Количество пропусков', number_of_passes)
                             print(f"ходит игрок {self.players[number - 1].name, self.players[number - 1].shticks}")
                             pos_var = self.game.put_a_chip(number - 1, self.players)
                             print(f"Возможные варианты")
@@ -126,7 +128,7 @@ class Server:
                                         data = self.players[number - 1].conn.recv(1024)
                                         data = data.decode()
                                         print('Получили от игрока:', data)
-                                        number_of_passes += 1
+                                        number_of_passes = 0
                                         data = eval(data)
                                         print(f"Что пришло от игрока {self.players[number - 1].name}, {data}")
                                         print(f"Какие фишки у игрока {self.players[number - 1].shticks}")
@@ -140,18 +142,27 @@ class Server:
                                                 self.players[number - 1].shticks[data['count_of_position']])
                                         answer = False
                                     else:
+                                        number_of_passes += 1
                                         print('У игрока нет вариантов')
                                         answer = False
                             # Вот тут возможно надо считать рыбу
                                 except:
                                     continue
-                            print('Мы по идее переходим к следущему игроку и проверяем конец раунда')
+                            print('Мы по идее переходим к следующему игроку')
+                            if number_of_passes == 4:
+                                print('у нас тут типа рыба, но скорей конец раунда')
+                                time.sleep(5)
                             if self.game.dont_end_round(number_of_passes,
                                                         number - 1, self.players)\
-                                    and len(self.game.board) > 10:
-                                self.game.end_round = False
-                                print('Раунд должен быть закончен')
-                                break
+                                    and len(self.game.board) >= 12:
+                                    self.game.end_round = False
+                                    print('Раунд должен быть закончен')
+                                    break
+                    if self.game.dont_end_game() == 'one':
+                        print('Победила первая команда')
+                    elif self.game.dont_end_game() == 'two':
+                        print('Победила вторая команда')
+                    break
 
                         # time.sleep(2)
 

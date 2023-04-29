@@ -17,6 +17,15 @@ class client_Vanya:
         # self.board_client = list([])
         # self.position_of_the_first_сhip = 0
 
+    def exam(self, number_in_deck, side_in_deck, var_of_position):
+        """Проверяем можно ли поставить нужную фишку"""
+        print('Зашли в функцию проверки выбранной фишки')
+        for elem in var_of_position:
+            print(f"какие варианты {elem}, какую фишку {number_in_deck}, с какой стороны {side_in_deck}")
+            if number_in_deck == elem[0][0] and side_in_deck == elem[0][1]:
+                return True
+        return False
+
     def examination_number_shtics(self, number, key, side, variable):
         """Фишка была выбрана и теперь мы пытаемся ее ставить"""
 
@@ -72,17 +81,16 @@ class client_Vanya:
         pygame.display.update()
         while running:
             # Получаем от сервера какие фишки куда можно поставить
-            data = sock.recv(1024)
-            data = data.decode()
-            print(f"что получили {data}, {type(data)}")
-            data = eval(data)
-            # if data.count('{') == 1:
-            #     print(f"что получили {data}, {type(data)}")
-            #     data = eval(data)
-            # else:
-            #     data = data[: data.find("}") + 1]
-            #     print(f"что получили {data}, {type(data)}")
-            #     data = eval(data)
+            data1 = sock.recv(1024)
+            data1 = data1.decode()
+            print(f"что получили {data1}, {type(data1)}")
+            try:
+                data = eval(data1)
+            except:
+                data = data1[0: data1.find('}') + 1]
+                print('Сработал try', data)
+                data = eval(data)
+
             # Очистим все поле
             pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
                                 [[0, 0], [WIDTH_WINDOW, 0], [WIDTH_WINDOW, HEIGHT_WINDOW], [0, HEIGHT_WINDOW]])
@@ -128,7 +136,7 @@ class client_Vanya:
                 # Переходим к следущей координате
                 X_player_shticks_start += 30
                 pygame.display.update()
-                # clock.tick()
+                clock.tick(20)
             # Отрисовываем фишки на доске
             self.X_right = 0
             for elem in data['board']:
@@ -154,6 +162,7 @@ class client_Vanya:
                             pygame.draw.rect(dis, THECOLORS['black'], lst_two)
                     self.X_right += 30
                     pygame.display.update()
+                    clock.tick(20)
                 else:
                     pygame.draw.polygon(dis, THECOLORS['white'],
                                         [[self.X_right, self.Y_not_doubles],
@@ -175,6 +184,7 @@ class client_Vanya:
                             pygame.draw.rect(dis, THECOLORS['black'], lst_two)
                     self.X_right += 60
                     pygame.display.update()
+                    clock.tick(20)
             # Теперь выбираем фишку и должны ее поставить
             if data['pos'] != list([[], None, None]):
                 tmp = True
@@ -204,7 +214,8 @@ class client_Vanya:
                                 tmp_side = 'left'
                             elif event.key == pygame.K_RIGHT:
                                 tmp_side = 'right'
-                            if tmp_num != 10 and tmp_side != '':
+                            if self.exam(tmp_num, tmp_side, data['pos']):
+                                print('Проверка прошла успешно, можно отправлять серверу')
                                 # Если возвращается 1, то это дубль, если 2, то обычная фишка
                                 tmp = False
                                 doubles_, key = self.examination_number_shtics(tmp_num, data['shticks'][tmp_num],

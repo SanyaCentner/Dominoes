@@ -611,8 +611,8 @@ class Game:
         self.board = list([])
         self.count_round = 1
         self.number_first_move = 0
-        self.point_team_one = 0
-        self.point_team_two = 0
+        self.point_team_one = 100
+        self.point_team_two = 100
         self.end_round = True
         self.end_game = True
         self.all_shtick = {1: "0-0", 2: "0-1", 3: "0-2", 4: "0-3", 5: "0-4", 6: "0-5", 7: "0-6",
@@ -753,9 +753,9 @@ class Game:
                 print(f"номер игрока {count}, сам игрок {players[count].name}")
                 self.number_first_move = count + 1
                 self.count_round += 1
-                if count == 1 or count == 3:
+                if count == 2 or count == 4:
                     self.point_team_one += self.summ_points(players[0], players[2])
-                elif count == 2 or count == 4:
+                elif count == 1 or count == 3:
                     self.point_team_two += self.summ_points(players[1], players[3])
                 return True
 
@@ -833,15 +833,13 @@ class Game:
             return [[[n, 'right'], True, False], [[n, 'left'], True, False]]
         else:
             return self.possible_chips_that_can_be_placed(players[number_of_player])
-    #
-    #
-    # def dont_end_game(self):
-    #     if self.point_team_one >= min_of_end_point:
-    #         return 'one'
-    #     elif self.point_team_two >= min_of_end_point:
-    #         return 'two'
-    #     else:
-    #         return 'equality'
+
+    def dont_end_game(self):
+        if self.point_team_one >= Game.min_of_end_point:
+            return 'two'
+        elif self.point_team_two >= Game.min_of_end_point:
+            return 'one'
+
     def exam_point(self, key, number):
         if number == 1:
             if self.all_shtick[key][0] == '0':
