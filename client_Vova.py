@@ -89,13 +89,6 @@ class client_Vova:
                 data = data1[0: data1.find('}') + 1]
                 print('Сработал try', data)
                 data = eval(data)
-            # if data.count('{') == 1:
-            #     print(f"что получили {data}, {type(data)}")
-            #     data = eval(data)
-            # else:
-            #     data = data[: data.find("}") + 1]
-            #     print(f"что получили {data}, {type(data)}")
-            #     data = eval(data)
             # Очистим все поле
             pygame.draw.polygon(dis, THECOLORS['lightskyblue3'],
                                 [[0, 0], [WIDTH_WINDOW, 0], [WIDTH_WINDOW, HEIGHT_WINDOW], [0, HEIGHT_WINDOW]])
@@ -106,6 +99,11 @@ class client_Vova:
             # Отрисовываем кто делает ход
             text_name = font.render(f"Ход делает {data['name']}", True, THECOLORS['black'])
             place_text_name = text_name.get_rect(center=(100, 50))
+            dis.blit(text_name, place_text_name)
+            # Отписываем какой счет между командами
+            text_name = font.render(f"CC {data['point_team_one']} : ВВ {data['point_team_two']}", True,
+                                    THECOLORS['black'])
+            place_text_name = text_name.get_rect(center=(1000, 50))
             dis.blit(text_name, place_text_name)
             # Отрисовываем какой раунд
             text_round = font.render(f"Начинается {data['count_of_round']}-й раунд", True, THECOLORS['black'])
@@ -220,6 +218,11 @@ class client_Vova:
                             elif event.key == pygame.K_RIGHT:
                                 tmp_side = 'right'
                             if self.exam(tmp_num, tmp_side, data['pos']):
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['lightskyblue3'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
                                 print('Проверка прошла успешно, можно отправлять серверу')
                                 # Если возвращается 1, то это дубль, если 2, то обычная фишка
                                 tmp = False
@@ -233,6 +236,14 @@ class client_Vova:
                                 print('Что пытаемся отправить?', message, type(message))
                                 sock.send(message.encode())
                                 break
+                            elif not self.exam(tmp_num, tmp_side, data['pos']) \
+                                    and (tmp_side != '' and tmp != 10):
+                                # Отписываем что за игрок в целом
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['black'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
 
 if __name__ == "__main__":
     client = client_Vova()

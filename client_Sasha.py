@@ -96,6 +96,10 @@ class client_Sasha:
             text_name = font.render('Я игрок Саня', True, THECOLORS['black'])
             place_text_name = text_name.get_rect(center=(100, 25))
             dis.blit(text_name, place_text_name)
+            # Отписываем какой счет между командами
+            text_name = font.render(f"CC {data['point_team_one']} : ВВ {data['point_team_two']}", True, THECOLORS['black'])
+            place_text_name = text_name.get_rect(center=(1000, 50))
+            dis.blit(text_name, place_text_name)
             # Отрисовываем кто делает ход
             text_name = font.render(f"Ход делает {data['name']}", True, THECOLORS['black'])
             place_text_name = text_name.get_rect(center=(100, 50))
@@ -220,6 +224,11 @@ class client_Sasha:
                                 tmp_side = 'right'
                             # if tmp_num != 10 and tmp_side != '':
                             if self.exam(tmp_num, tmp_side, data['pos']):
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['lightskyblue3'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
                                 print('Проверка прошла успешно, можно отправлять серверу')
                                 # Если возвращается 1, то это дубль, если 2, то обычная фишка
                                 tmp = False
@@ -233,7 +242,14 @@ class client_Sasha:
                                 print('Что пытаемся отправить?', message, type(message))
                                 sock.send(message.encode())
                                 break
-
+                            elif not self.exam(tmp_num, tmp_side, data['pos']) \
+                                    and tmp_side != '' and tmp != 10:
+                                # Отписываем что за игрок в целом
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['black'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
 
 if __name__ == "__main__":
     client = client_Sasha()

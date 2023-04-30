@@ -102,6 +102,11 @@ class client_Vanya:
             text_name = font.render(f"Ход делает {data['name']}", True, THECOLORS['black'])
             place_text_name = text_name.get_rect(center=(100, 50))
             dis.blit(text_name, place_text_name)
+            # Отписываем какой счет между командами
+            text_name = font.render(f"CC {data['point_team_one']} : ВВ {data['point_team_two']}", True,
+                                    THECOLORS['black'])
+            place_text_name = text_name.get_rect(center=(1000, 50))
+            dis.blit(text_name, place_text_name)
             # Отрисовываем какой раунд
             text_round = font.render(f"Начинается {data['count_of_round']}-й раунд", True, THECOLORS['black'])
             place_text_round = text_round.get_rect(center=(750, 50))
@@ -215,6 +220,11 @@ class client_Vanya:
                             elif event.key == pygame.K_RIGHT:
                                 tmp_side = 'right'
                             if self.exam(tmp_num, tmp_side, data['pos']):
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['lightskyblue3'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
                                 print('Проверка прошла успешно, можно отправлять серверу')
                                 # Если возвращается 1, то это дубль, если 2, то обычная фишка
                                 tmp = False
@@ -228,6 +238,14 @@ class client_Vanya:
                                 print('Что пытаемся отправить?', message, type(message))
                                 sock.send(message.encode())
                                 break
+                            elif not self.exam(tmp_num, tmp_side, data['pos']) \
+                                    and (tmp_side != '' and tmp != 10):
+                                # Отписываем что за игрок в целом
+                                text_name = font.render('Ты че даун?) Попробуй еще раз',
+                                                        True, THECOLORS['black'])
+                                place_text_name = text_name.get_rect(center=(750, 200))
+                                dis.blit(text_name, place_text_name)
+                                pygame.display.update()
 
 if __name__ == "__main__":
     client = client_Vanya()

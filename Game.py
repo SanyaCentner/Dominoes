@@ -611,8 +611,8 @@ class Game:
         self.board = list([])
         self.count_round = 1
         self.number_first_move = 0
-        self.point_team_one = 100
-        self.point_team_two = 100
+        self.point_team_one = 0
+        self.point_team_two = 0
         self.end_round = True
         self.end_game = True
         self.all_shtick = {1: "0-0", 2: "0-1", 3: "0-2", 4: "0-3", 5: "0-4", 6: "0-5", 7: "0-6",
@@ -728,23 +728,32 @@ class Game:
             print(f"Какая фишка {self.all_shtick[shtick]}, Сумма очков {count}")
         return count
 
+    def scoring_eligibility_check(self, summ_one, summ_two):
+        if self.point_team_one == 0 and (summ_one > 12 or summ_two > 12):
+            return True
+        else:
+            return False
+        return True
+
     def dont_end_round(self, passes, number_of_player, players):
         """ Проверяем кончился ли раунд?"""
-        ## Проверяем рыбу
-        # print("Проверяем конец раунда")
-        # if passes == 4:
-        #     self.number_first_move = number_of_player
-        #     self.count_round += 1
-        #     team_one = self.summ_points(players[0], players[2])
-        #     team_two = self.summ_points(players[1], players[3])
-        #     if team_one == team_two:
-        #         self.point_team_one += team_one
-        #         self.point_team_two += team_two
-        #     elif team_one > team_two:
-        #         self.point_team_one += team_one
-        #     elif team_one < team_two:
-        #         self.point_team_two += team_two
-        #     return True
+        # Проверяем рыбу
+        print("Проверяем конец раунда")
+        team_one = self.summ_points(players[0], players[2])
+        team_two = self.summ_points(players[1], players[3])
+        if passes == 4:
+            print('Проверяем рыбу')
+            self.number_first_move = number_of_player + 1
+            self.count_round += 1
+            if self.scoring_eligibility_check(team_one, team_two):
+                if team_one == team_two:
+                    self.point_team_one += team_one
+                    self.point_team_two += team_two
+                elif team_one > team_two:
+                    self.point_team_one += team_one
+                elif team_one < team_two:
+                    self.point_team_two += team_two
+            return True
 
         ## Проверяем конец раунда в целом
         for count in range(0, 4):
@@ -753,10 +762,11 @@ class Game:
                 print(f"номер игрока {count}, сам игрок {players[count].name}")
                 self.number_first_move = count + 1
                 self.count_round += 1
-                if count == 2 or count == 4:
-                    self.point_team_one += self.summ_points(players[0], players[2])
-                elif count == 1 or count == 3:
-                    self.point_team_two += self.summ_points(players[1], players[3])
+                if self.scoring_eligibility_check(team_one, team_two, passes):
+                    if count == 0 or count == 2:
+                        self.point_team_two += team_two
+                    elif count == 1 or count == 3:
+                        self.point_team_one += team_one
                 return True
 
         return False

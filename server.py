@@ -110,14 +110,19 @@ class Server:
                                                          'name': self.players[number - 1].name,
                                                          'count_of_round': self.game.count_round,
                                                          'board': self.game.board,
-                                                         'shticks': self.players[number - 1].shticks})
+                                                         'shticks': self.players[number - 1].shticks,
+                                                         'point_team_one': self.game.point_team_one,
+                                                         'point_team_two': self.game.point_team_two})
                                             self.players[i].conn.send(param.encode())
                                         else:
                                             param = str({'pos': list([[], None, None]),
                                                          'name': self.players[number - 1].name,
                                                          'count_of_round': self.game.count_round,
                                                          'board': self.game.board,
-                                                         'shticks': self.players[i].shticks})
+                                                         'shticks': self.players[i].shticks,
+                                                         'point_team_one': self.game.point_team_one,
+                                                         'point_team_two': self.game.point_team_two
+                                                         })
                                             self.players[i].conn.send(param.encode())
                                 except:
                                     print(f"Не получилось отправить")
